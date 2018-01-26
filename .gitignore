@@ -1,5 +1,5 @@
 # Compiled class file
 out/
-.DS_Store/
+.DS_Store
 .idea/
-
+*.iml
