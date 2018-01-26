@@ -12,9 +12,9 @@ public class StringResource extends Resource {
 
 
     public StringResource(String val) {
-        this.stringResource = val.trim().split(" ");
+        this.stringResource = val.trim().split("\\s+");
     }
-    
+
 
 
     @Override
