@@ -6,9 +6,8 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Scanner;
+
 
 public class ServerMain {
 
@@ -19,6 +18,7 @@ public class ServerMain {
     public ServerMain() throws IOException {
         serverSocket = new ServerSocket(PORT);
         System.out.println("Server socket IP: " + serverSocket.getInetAddress().getHostAddress());
+        new Thread(new ServerBroadcaster(clients)).start();
     }
 
 

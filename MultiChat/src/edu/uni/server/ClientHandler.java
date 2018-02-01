@@ -8,8 +8,8 @@ public class ClientHandler implements Runnable {
 
 
     private final Socket connection;
-    private BufferedReader socketReader; // буферизировнный читатель сокета
-    private BufferedWriter socketWriter; // буферизированный писатель в сокет
+    private BufferedReader socketReader;
+    private BufferedWriter socketWriter;
 
 
     public ClientHandler(Socket socket) throws IOException {
@@ -40,14 +40,15 @@ public class ClientHandler implements Runnable {
     }
 
 //
-//    public void sendMessage(String message) {
-//        try {
-//            socketWriter.write(message);
-//            socketWriter.flush();
-//        } catch (IOException e) {
-//            System.out.println("Could't send to client: " + connection.getInetAddress().getHostAddress());
-//        }
-//    }
+    public void sendMessage(String message) {
+        try {
+            socketWriter.write(message);
+            socketWriter.write('\n');
+            socketWriter.flush();
+        } catch (IOException e) {
+            System.out.println("Could't send to client: " + connection.getInetAddress().getHostAddress());
+        }
+    }
 
     private synchronized void writeToConsole(String message) {
         System.out.println(message);

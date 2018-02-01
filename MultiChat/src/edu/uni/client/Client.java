@@ -57,18 +57,18 @@ public class Client implements Runnable {
         public void run() {
             String line;
 
-            try {
-                line = socketReader.readLine();
+            while (true) {
+                try {
+                    line = socketReader.readLine();
+                    if (line == null) {
+                        System.out.println("Server shut down. Shutting down client");
+                        System.exit(0);
+                    }
+                    System.out.println(line);
 
-                if (line == null) {
-                    System.out.println("Server shut down. Shutting down client");
-                    System.exit(0);
+                } catch (IOException e) {
+                    System.out.println("Connection lost");
                 }
-
-                System.out.println(line);
-
-            } catch (IOException e) {
-                System.out.println("Connection lost");
             }
         }
 
