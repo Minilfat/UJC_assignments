@@ -1,40 +1,60 @@
 package edu.uni.server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.List;
+
 import java.util.Scanner;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class ServerBroadcaster implements Runnable{
+public class ServerBroadcaster implements Runnable {
 
-    private final Scanner serverIn;
-    private final List<ClientHandler> clients;
+    private Scanner serverIn;
+    BlockingQueue<ServerMain.ClientHandler> clients;
 
-    public ServerBroadcaster(List<ClientHandler> clients) {
-        this.serverIn = new Scanner(System.in);
-        this.clients = clients;
+    private ServerMain ss;
+
+    ServerBroadcaster(ServerMain ss) {
+        this.ss = ss;
+        serverIn = new Scanner(System.in);
+        this.clients = new LinkedBlockingQueue<>();
     }
-
     @Override
     public void run() {
-
         String mes;
         while (true) {
             mes = serverIn.nextLine();
+            if ("::exit".equals(mes)) {
 
-            if ("quit".equals(mes))
-                System.exit(0);
+                // искусственно отправляем null
+                // receiver'ы у клиентов закроют сокеты со своей стороны
+                // и потоки receiver'ов завершатся
+                sendAllClients(null, "Server shutting down");
+                sendAllClients(null, "make fail keyboard input");
+                //sendAllClients(null, null);
+                // заканчиваем поток рассылки клиентам
+                break;
+            }
 
-            sendAllClients(mes);
+            sendAllClients(null, "[Server]: " + mes);
 
         }
+
+        // закрываем ресурсы со стороны сервера
+        serverIn.close();
+        ss.shutDownServer();
+
+        //sendAllClients(null, "Shit");
     }
 
     // active client -  тот, от кого пришло сообщение
-    private synchronized void sendAllClients(String message) {
-        for (ClientHandler client: clients)
-            client.sendMessage(message);
+    public synchronized void sendAllClients(ServerMain.ClientHandler activeClient, String message) {
+        for (ServerMain.ClientHandler client : clients)
+            if (!client.equals(activeClient))
+                client.send(message);
+    }
+
+
+    public void addClient(ServerMain.ClientHandler client) {
+        this.clients.add(client);
     }
 
 }
