@@ -3,21 +3,63 @@ package edu.uni.resources;
 
 import edu.uni.Common;
 
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+
 
 public class FileResource implements IResource{
 
 
-    private int counter = 0;
-    protected String[] values;
-    public boolean finished = false;
+    private int counter;
+    private String[] values;
+    private boolean finished;
+    private  ReadManager manager;
 
 
 
-    protected boolean add() {
+    public FileResource(String fileName) {
+        this.finished = false;
+        try {
+            this.manager = new ReadManager(fileName);
+
+            this.values = manager.readLine().trim().split("\\s+");
+            this.counter = 0;
+
+        } catch (FileNotFoundException e) {
+            System.out.println("Couldn't process a file: " + fileName + ". File not found");
+            this.finished = true;
+        }
+    }
+
+
+
+    @Override
+    public boolean processNext() {
+
+        // закончили обработку всех цифр из строки
+        // достаем новую и продолжаем
+        // если null, то завершаем обработку
+        if (counter >= values.length) {
+            // достаем новую строку для обработки
+            String tmp = manager.readLine();
+            if (tmp == null)
+                return finished = true;
+
+            // сплитим и запихиваем в values новые значения
+
+            this.values =tmp.trim().split("\\s+");
+            this.counter = 0;
+
+        }
+
+        // если все ок - также добавляем в общую сумму
+        return add();
+    }
+
+
+
+    //  в случае добавления значения в общую сумму - возвращает true
+    // если ошибка формата входных данных - возвращаем false
+    private boolean add() {
 
         int value;
         try {
@@ -39,75 +81,7 @@ public class FileResource implements IResource{
     }
 
 
-    private final String fileName;
-    private Manager manager;
-
-    public FileResource(String fileName) {
-        this.fileName = fileName;
-        this.manager = new Manager();
-
-        try {
-            manager.open();
-            manager.readAndSplit();
-        } catch (FileNotFoundException e) {
-            System.out.println("File not found: " + fileName);
-            finished = true;
-        }
-    }
-
-
-
-    @Override
-    public boolean processNext() {
-
-        if (counter >= values.length)
-            // достаем новую строку для обработки
-            manager.readAndSplit();
-
-
-        if (manager.eof)
-            return finished = true;
-
-        return add();
-    }
-
-
-
-
-    private class Manager {
-
-        private BufferedReader br;
-        private boolean eof = false;
-
-        private void open() throws FileNotFoundException {
-            br = new BufferedReader(new FileReader(fileName));
-        }
-
-
-        private void readAndSplit()  {
-
-            String current;
-
-            try {
-                if ((current = br.readLine()) == null) {
-
-                    eof = true;
-                    br.close();
-
-                } else {
-
-                    values = current.trim().split("\\s+");
-                    counter = 0;
-
-                }
-            } catch (IOException e) {
-                // останавливаем работу
-                finished = true;
-                System.out.println("Can't read a file: " + fileName);
-            }
-
-        }
-
-
+    public boolean isFinished() {
+        return finished;
     }
 }

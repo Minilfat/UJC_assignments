@@ -7,11 +7,7 @@ import edu.uni.resources.FileResource;
 public class Main {
 
 
-    private static  String[] strings = {"2  12 12 14 200 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
-            "3 100", "-2  1000", "400 600 45 434 23 32 32 32 23 1   4",
-            "2 1 10000 23 44    54", "1100000000"};
-
-    private static String[] fileNames = {"files/1.csv", "files/2.csv", "files/3.csv", "files/4.csv"};
+    private static String[] fileNames = {"filess/1.csv", "filess/2.csv", "files/3.csv", "files/4.csv"};
 
 
     public static void main(String[] args) {

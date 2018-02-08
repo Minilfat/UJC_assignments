@@ -1,20 +1,22 @@
 package edu.uni.handler;
 
 
+import edu.uni.resources.IResource;
+
 public class ResourceHandler implements Runnable {
 
-    private Resource res;
+    private IResource res;
     private static volatile boolean stopAll = false;
 
 
-    public ResourceHandler(Resource res) {
+    public ResourceHandler(IResource res) {
         this.res = res;
     }
 
     @Override
     public void run() {
 
-        while (!stopAll && !res.finished) {
+        while (!stopAll && !res.isFinished()) {
 
             if (!res.processNext()) {
                 stopAll = true;
