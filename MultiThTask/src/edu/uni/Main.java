@@ -6,51 +6,99 @@ import edu.uni.resources.FileResourceA;
 
 import edu.uni.resources.IResource;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-
 
 public class Main {
 
 
-    private static String[] fileNames = {"filess/1.csv", "filess/2.csv", "files/3.csv", "files/4.csv"};
-
-    //edu.uni.resources.FileResourceB
-
-    public static void main(String[] args) throws IllegalAccessException, InstantiationException {
-        MyLoader a = new MyLoader();
-
-        try {
-             IResource b = (IResource) a.loadClass("edu.uni.resources.FileResourceB").
-                     getConstructor(String.class).
-                     newInstance(fileNames[2]);
-            System.out.println(b.isFinished());
+    private static String[] fileNames = {"files/1.csv", "files/2.csv", "files/4.csv","files/3.csv"};
+    // у ресурхандлера есть поле ресурс, который имплементит IResource
+    private static ResourceHandler[] pool = new ResourceHandler[fileNames.length];
 
 
-
-            //System.out.println(b.isFinished());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
+    // мы создаем и запускаем потоки
+    // которые с файловым ресурсом А
+    // в рантайме хотим поменять его на файловым ресурс FileResourceB
+    private static void go() {
+        for (int i=0; i<pool.length; i++) {
+            pool[i] = new ResourceHandler(new FileResourceA(fileNames[i]));
+            new Thread(pool[i]).start();
         }
-
-        //System.out.println(FileResourceA.class.getCanonicalName());
     }
 
-    private static void go(int n) {
+
+    public static void main(String[] args) {
 
 
-        Thread[] threadPool = new Thread[n];
 
-        for (int i=0; i<n; i++) {
-            threadPool[i] = new Thread(new ResourceHandler(new FileResourceA(fileNames[i])));
-            threadPool[i].start();
+        // старутем трэды по подсчету суммы
+        go();
+
+        // новый трэд за мониторингом условия смены логики суммирования
+        new Thread(() -> {
+            while (true) {
+                // при добавлении суммы синхронизириемся также по Sum.class
+                // (см.  классы имплементирующие IResource)
+                synchronized (Sum.class) {
+                    // здесь условие смены Iresource в классе ResourceHandler
+                    if (Sum.value !=0 && Sum.value % 2 == 0) {
+                        if (!change())
+                            System.out.println("Couldn't change classes in runtime");
+                        break;
+                    }
+                }
+            }
+        }).start();
+
+
+
+
+    }
+
+
+
+    private static boolean change() {
+        Class<?> clazz = null;
+        try {
+            clazz = new MyLoader().loadClass("edu.uni.resources.FileResourceB");
+        } catch (ClassNotFoundException e) {
+            System.out.println("Class was not found...");
+            return false;
         }
 
+        for (int i=0; i<pool.length; i++) {
+            IResource newRes = null;
+            try {
+                newRes = (IResource) clazz.newInstance();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+                System.out.println("Couldn't initialize a class");
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+                System.out.println("Это я хз вообще как обрабатывать");
+            }
 
+            if (newRes == null)
+                return false;
+
+
+            exchangeFields(pool[i].getRes(), newRes);
+            pool[i].setRes(newRes);
+
+        }
+        return true;
+
+    }
+
+
+
+    // Resource содержит много полей
+    // мы берем эти поля у старых ресурсов - вставляем в новые
+    // но логика суммирования у нового ресурса - другая
+
+    private static void exchangeFields(IResource oldRes, IResource newRes) {
+        newRes.setCounter(oldRes.getCounter());
+        newRes.setValues(oldRes.getValues());
+        newRes.setManager(oldRes.getManager());
     }
 
 }

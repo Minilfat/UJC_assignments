@@ -25,7 +25,13 @@ public class ResourceHandler implements Runnable {
 
         }
 
-
     }
 
+    public IResource getRes() {
+        return res;
+    }
+
+    public void setRes(IResource res) {
+        this.res = res;
+    }
 }

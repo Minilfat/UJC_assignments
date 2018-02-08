@@ -15,6 +15,7 @@ public class FileResourceA implements IResource{
     private  ReadManager manager;
 
 
+    public FileResourceA() {}
 
     public FileResourceA(String fileName) {
         this.finished = false;
@@ -89,5 +90,25 @@ public class FileResourceA implements IResource{
         return (value >= 0) && (value % 2 == 0);
     }
 
+    public int getCounter() {
+        return counter;
+    }
+    public void setCounter(int counter) {
+        this.counter = counter;
+    }
 
+    public String[] getValues() {
+        return values;
+    }
+    public void setValues(String[] values) {
+        this.values = values;
+    }
+
+
+    public ReadManager getManager() {
+        return manager;
+    }
+    public void setManager(ReadManager manager) {
+        this.manager = manager;
+    }
 }
