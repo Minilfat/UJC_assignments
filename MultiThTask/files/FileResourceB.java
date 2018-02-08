@@ -1,12 +1,12 @@
 package edu.uni.resources;
 
 
-import edu.uni.Common;
+import edu.uni.Sum;
 
 import java.io.FileNotFoundException;
 
 
-public class FileResource implements IResource{
+public class FileResourceB implements IResource{
 
 
     private int counter;
@@ -16,11 +16,10 @@ public class FileResource implements IResource{
 
 
 
-    public FileResource(String fileName) {
+    public FileResourceB(String fileName) {
         this.finished = false;
         try {
             this.manager = new ReadManager(fileName);
-
             this.values = manager.readLine().trim().split("\\s+");
             this.counter = 0;
 
@@ -42,7 +41,7 @@ public class FileResource implements IResource{
             // достаем новую строку для обработки
             String tmp = manager.readLine();
             if (tmp == null)
-                return finished = true;
+                return this.finished = true;
 
             // сплитим и запихиваем в values новые значения
 
@@ -64,10 +63,10 @@ public class FileResource implements IResource{
         int value;
         try {
             value = Integer.parseInt(values[counter++]);
-            if (Common.isMatched(value)) {
-                synchronized (Common.class) {
-                    Common.sum += value;
-                    System.out.println(Common.sum);
+            if (isMatched(value)) {
+                synchronized (Sum.class) {
+                    Sum.value += value;
+                    System.out.println(Sum.value);
                 }
             }
             return true;
@@ -84,4 +83,11 @@ public class FileResource implements IResource{
     public boolean isFinished() {
         return finished;
     }
+
+    @Override
+    public boolean isMatched(int value) {
+        return value < 0;
+    }
+
+
 }
