@@ -1,12 +1,43 @@
 package edu.uni.resources;
 
 
+import edu.uni.Common;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class FileResource extends Resource {
+public class FileResource implements IResource{
+
+
+    private int counter = 0;
+    protected String[] values;
+    public boolean finished = false;
+
+
+
+    protected boolean add() {
+
+        int value;
+        try {
+            value = Integer.parseInt(values[counter++]);
+            if (Common.isMatched(value)) {
+                synchronized (Common.class) {
+                    Common.sum += value;
+                    System.out.println(Common.sum);
+                }
+            }
+            return true;
+
+        } catch (NumberFormatException e) {
+            System.out.println("Unexpected value in resource. Stopping...");
+            finished = true;
+            return false;
+        }
+
+    }
+
 
     private final String fileName;
     private Manager manager;

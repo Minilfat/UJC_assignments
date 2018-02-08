@@ -1,10 +1,6 @@
 package edu.uni.handler;
 
 
-import edu.uni.resources.Resource;
-
-
-
 public class ResourceHandler implements Runnable {
 
     private Resource res;

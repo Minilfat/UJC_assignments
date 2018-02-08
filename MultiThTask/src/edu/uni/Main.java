@@ -2,8 +2,6 @@ package edu.uni;
 
 import edu.uni.handler.ResourceHandler;
 import edu.uni.resources.FileResource;
-import edu.uni.resources.StringResource;
-
 
 
 public class Main {
