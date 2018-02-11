@@ -11,9 +11,7 @@ public class Client implements Runnable {
     private final BufferedReader socketReader;
     private final Scanner userInput;
     private final String name;
-
-
-    private volatile boolean simulateKeyboard = false;
+    private boolean banned = false;
 
 
 
@@ -22,6 +20,11 @@ public class Client implements Runnable {
         socket = new Socket("0.0.0.0", 9099);
         socketWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+        socketWriter.write("name: " + name);
+        socketWriter.write('\n');
+        socketWriter.flush();
+
         userInput = new Scanner(System.in);
         this.name = name;
         new Thread(new Receiver()).start();
@@ -32,24 +35,20 @@ public class Client implements Runnable {
         String in;
         while (!socket.isClosed()) {
 
-
-            /// здесь можем повиснуть
-            // т.е. если на сервере ввели ::quit
-            //  он отрубит все сокеты - поток нашего ресивера сообщений
-            // завершится по условию line==null, закроет ресурсы
-            // а здесь будет необходимо ждать
-
-            // костыляем с помощью просьбы о нажатии enter
-            // после этого окажемся в блоке catch -
-            // т.к. сокеты уже закрыты
             in = userInput.nextLine();
             try {
+
+                if (in != null && in.startsWith("ban")) {
+                    ban(in);
+                    continue;
+                }
+
 
                 socketWriter.write("[" + name + "]: " + in);
                 socketWriter.write('\n');
                 socketWriter.flush();
 
-                if ("::exit".equals(in)) {
+                if ("::exit".equals(in) || in == null) {
                     // служебное слово уже отправили на сервер (строка 94
                     // - мои предположения почему так нужно делать)
                     // поток чтения с сокета завершаем break'ом
@@ -60,16 +59,22 @@ public class Client implements Runnable {
 
             } catch (IOException e) {
 
-                if (!simulateKeyboard) {
-                    System.out.println("Couldn't send a message");
-                    System.exit(-1);
-                } else {
-                    System.exit(0);
-                }
+                System.out.println("Couldn't send a message");
+                break;
             }
         }
         // здесь происходит закрытие
         close();
+    }
+
+    private void ban(String message) throws IOException {
+        if (message.trim().split("\\s++").length <= 1) {
+            System.out.println("Ban usage: ban <ip-address>");
+        } else {
+            socketWriter.write(message);
+            socketWriter.write('\n');
+            socketWriter.flush();
+        }
     }
 
 
@@ -80,6 +85,7 @@ public class Client implements Runnable {
                 socketReader.close();
                 socketWriter.close();
                 socket.close();
+                System.exit(0);
             } catch (IOException e) {
                 System.out.println("Couldn't close connection");
                 System.exit(-1);
@@ -110,46 +116,28 @@ public class Client implements Runnable {
 
             while (true) {
                 try {
-                    // при завершениии потока ввода (строка 55)
-                    // данный поток уже ждет сообщение с сервера здесь.
-                    // для того, чтобы сюда пришел null,
-                    // надо на сервере закрыть сокет данного клиента
-                    // именно поэтому служебное слово ::exit отправляется на сервер
-                    // и там закрывается сокет на серверной стороне - сюда приходит null
-                    // все ресурсы закрыты - проблем быть не должно
+
                     line = socketReader.readLine();
 
                     // значит, что сервер закрыл сокет со своей стороны
                     if (line == null)
                         break;
-                    if (line.equals("make fail keyboard input")) {
-                        simulateKeyboard = true;
-                        continue;
-                    }
+
+                    if ("You were banned".equals(line))
+                        banned = true;
+
                     System.out.println(line);
 
                 } catch (IOException e) {
                     System.out.println("Connection lost");
-                    close();
+                    break;
                 }
             }
-            // закрываем со своей стороны
 
-            if (simulateKeyboard)
-                System.out.print("Leave a chat typing \"Enter\" key!");
+            if (banned)
+                System.out.println("type '::exit' to exit");
             else
                 System.out.println("Leaving a chat");
-
-            // метод синхронизирован, так что даже если поток писателя
-            // уже закрыл сокет (а скорее всего уже закрыл, в данном методе предусмотрена проверка
-            // на закрытый сокет), исключения никакого не вылетит. I hope
-
-            // здесь закрытие необходимо оставить
-            // например, если сервер отключается (::exit в консоли сервера подходит под этот случай)
-            // поток этого ресивера завершается - все ресурсы нормально закрываем
-            // но повисаем при ожидании пользовательского ввода
-
-            close();
         }
     }
 }

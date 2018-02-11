@@ -11,15 +11,12 @@ public class ServerMain {
 
     private ServerSocket serverSocket;
     private static final int PORT = 9099;
-    private static ServerBroadcaster broadcaster;
 
 
     private ServerMain() throws IOException {
         serverSocket = new ServerSocket(PORT);
         System.out.println("Server socket IP: " + serverSocket.getInetAddress().getHostAddress());
-        broadcaster = new ServerBroadcaster(this);
-        // заупск потока рассылки сообщений
-        new Thread(broadcaster).start();
+
     }
 
     private Socket listen() {
@@ -50,7 +47,7 @@ public class ServerMain {
                 clientHandler = new ClientHandler(connection);
                 final Thread clientThread = new Thread(clientHandler);
                 clientThread.start();
-                broadcaster.addClient(clientHandler);
+                ServerBroadcaster.addClient(clientHandler);
             } catch (IOException e) {
                 System.out.println("Couldn't get writer/reader for socket " + connection.getInetAddress().getHostAddress());
                 break;
@@ -66,10 +63,10 @@ public class ServerMain {
 
 
 
-    synchronized void shutDownServer() {
+    private synchronized void shutDownServer() {
 
         // обрабатываем список рабочих коннектов, закрываем каждый
-        for (ClientHandler s : broadcaster.clients) {
+        for (ClientHandler s : ServerBroadcaster.getClients()) {
             s.close();
         }
         if (!serverSocket.isClosed()) {
@@ -85,84 +82,6 @@ public class ServerMain {
     }
 
 
-    class ClientHandler implements Runnable {
-
-
-        private final Socket connection;
-        private BufferedReader socketReader;
-        private BufferedWriter socketWriter;
-
-
-        public ClientHandler(Socket socket) throws IOException {
-            connection = socket;
-            socketReader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
-            socketWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"));
-        }
-
-
-        @Override
-        public void run() {
-            while (true) {
-                String message;
-                try {
-                    message = socketReader.readLine();
-                } catch (IOException e) {
-                    // не можем прочитать сообщение - разрываем соединение
-                    // клиенту отправляется null
-                    // и отваливаем его из сервера
-                    close();
-                    break;
-                }
-
-                // если null или пришло служебное слово ::exit
-                if (message == null) break;
-                if (message.split("]: ")[1].startsWith("::exit")) {
-
-                    String str = "Client \"" +
-                            message.split("]: ")[0].replace("[", "") +
-                            "\" has left a chat";
-                    System.out.println(str);
-                    broadcaster.sendAllClients(this, str);
-                    // завершаем трэд
-                    break;
-
-                }
-
-                System.out.println(message);
-                broadcaster.sendAllClients(this, message);
-
-            }
-            // закрываем ресурсы
-            close();
-        }
-
-        public void send(String message) {
-            try {
-                socketWriter.write(message);
-                socketWriter.write('\n');
-                socketWriter.flush();
-            } catch (IOException e) {
-                System.out.println("Could't send to client: " + connection.getInetAddress().getHostAddress());
-            }
-        }
-
-
-        private synchronized void close() {
-            broadcaster.clients.remove(this);
-            if (!connection.isClosed()) {
-                try {
-                    socketWriter.close();
-                    socketReader.close();
-                    connection.close(); // закрываем
-                } catch (IOException e) {
-                    System.out.println("Couldn't close connection");
-                    e.printStackTrace();
-                    System.exit(-1);
-                }
-            }
-        }
-
-    }
 
 
 
