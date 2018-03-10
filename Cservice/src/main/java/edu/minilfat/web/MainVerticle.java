@@ -1,6 +1,7 @@
-package edu.service;
+package edu.minilfat.web;
 
-import edu.service.models.ClientProfile;
+
+import edu.minilfat.web.models.ClientProfile;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpHeaders;
@@ -10,7 +11,6 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.plugin.util.UserProfile;
 
 public class MainVerticle extends AbstractVerticle {
 

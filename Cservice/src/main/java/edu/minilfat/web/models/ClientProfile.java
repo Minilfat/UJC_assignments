@@ -1,4 +1,4 @@
-package edu.service.models;
+package edu.minilfat.web.models;
 
 import java.util.UUID;
 
